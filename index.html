@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155991615-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "UA-155991615-1");
+    </script>
+    <!-- page data -->
+    <meta charset="utf-8">
+    <title>Preference flows</title>
+    <meta name="description" content="Visualising the distribution of preferences in multi-member electorates.">
+    <meta name="keywords" content="abc, election, voting, preference, distribution, flow, votes">
+    <meta name="author" content="Markus Mannheim">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./resources/abcLogo64.png" rel="icon">
+    <!-- scripts & styles -->
+    <script src="./resources/d3.v6.min.js"></script>
+    <link href="./resources/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <!-- HTML skeleton -->
+    <div id="container">
+      <div id="textBox">
+        <h1>interactive test</h1>
+      </div>
+    </div>
+    <script>
+      // elements & variables
+      textBox = d3.select("#textBox");
+      // fetch page parameters
+      parameters = new URL(window.location.href).searchParams;
+      polity = parameters.get("polity");
+      year = parameters.get("year");
+      electorate = parameters.get("electorate");
+      textBox.append("p")
+        .text(polity);
+      textBox.append("p")
+        .text(year);
+      textBox.append("p")
+        .text(electorate);
+    </script>
+  </body>
+</html>
