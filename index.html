@@ -9,6 +9,7 @@
       gtag("js", new Date());
       gtag("config", "UA-155991615-1");
     </script>
+
     <!-- page data -->
     <meta charset="utf-8">
     <title>Preference flows</title>
@@ -17,31 +18,147 @@
     <meta name="author" content="Markus Mannheim">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="./resources/abcLogo64.png" rel="icon">
+
     <!-- scripts & styles -->
     <script src="./resources/d3.v6.min.js"></script>
     <link href="./resources/style.css" rel="stylesheet">
   </head>
+
   <body>
     <!-- HTML skeleton -->
     <div id="container">
-      <div id="textBox">
-        <h1>interactive test</h1>
+      <div id="holder">Preparing chart ...</div>
+      <div id="header">
+        <div id="title"></div>
+        <div id="navigation"></div>
       </div>
+      <div id="chart"></div>
+      <div id="footer"></div>
     </div>
+
     <script>
-      // elements & variables
-      textBox = d3.select("#textBox");
       // fetch page parameters
       parameters = new URL(window.location.href).searchParams;
       polity = parameters.get("polity");
+      source = polity == "tas" ? "Tasmanian" : "act" ? "ACT" : "Australian";
       year = parameters.get("year");
       electorate = parameters.get("electorate");
-      textBox.append("p")
-        .text(polity);
-      textBox.append("p")
-        .text(year);
-      textBox.append("p")
-        .text(electorate);
+
+      // elements & variables
+      container = d3.select("#container");
+      holder = d3.select("#holder");
+      header = d3.select("#header");
+      title = d3.select("#title");
+      navigation = d3.select("#navigation");
+      chart = d3.select("#chart");
+      footer = d3.select("#footer")
+        .html("Data: " + source + " Electoral Commission<span>. </span>Chart: Markus Mannheim");
+
+      // fetch chart data
+      d3.text("./data/" + polity + "/" + year + "/" + electorate + ".csv")
+        .then(function(data) {
+          // check and format data
+          [chartData, quota] = dataFormat(data);
+
+          // fade in
+          d3.timeout(setUpChart, 500);
+        });
+
+      function resize() {
+        let dimensions = document.getElementById("chart")
+          .getBoundingClientRect();
+        width = dimensions.width;
+        mobile = width < 500;
+
+        // fix footer for mobile
+        if (mobile) footer.select("span").html("<br>");
+      }
+
+      function setUpChart() {
+        // check screen dimensions
+        window.addEventListener("resize", resize);
+
+        // fade all over elements in
+        d3.selectAll("#header, #chart, #footer")
+          .transition()
+            .delay(500)
+            .duration(500)
+            .style("opacity", "1");
+
+        // fade the holder out
+        holder.transition()
+          .duration(500)
+          .style("opacity", 0)
+          .remove();
+
+        // populate header
+        title.append("p")
+          .text(electorate);
+        title.append("p")
+          .text(year + " " + source + " election");
+
+        // chart variables
+        candidates_no = chartData.length - 1;
+        stage = 0;
+
+        resize();
+      }
+
+      function dataFormat(fileText) {
+        // split text into lines
+        let fileLines = fileText.split("\n");
+
+        // remove empty lines
+        fileLines = removeEmptyValues(fileLines);
+
+        // validate data
+        if (electorate == fileLines[0].split(",")[1].toLowerCase()) {
+          electorate = electorate.slice(0, 1).toUpperCase() + electorate.slice(1);
+        } else {
+          console.log("failed electorate check");
+        }
+
+        // assign quota
+        let quota = +fileLines[1].split(",")[1];
+
+        // define columns
+        let columns = removeEmptyValues(fileLines[4].split(","));
+
+        // define chartData
+        chartData = [];
+        fileLines.slice(5).forEach(function(line) {
+          line = line.split(",");
+          let row = {
+            Votes: []
+          };
+          for (i = 0; i < line.length; i++) {
+            if (i < 5) {
+              row[columns[i]] = line[i];
+            } else {
+              if (line[0] == "Description") {
+                // comments don't need conversion
+                row["Votes"].push(line[i]);
+              } else {
+                // convert vote string to value
+                row["Votes"].push(+line[i]);
+              }
+            }
+          }
+          chartData.push(row);
+        });
+
+        return [chartData, quota];
+      }
+
+      function removeEmptyValues(array) {
+        for (i = 0; i < array.length; i++) {
+          if (array[i] == "") {
+            array = array.slice(0, i);
+            break;
+          }
+        }
+        return array;
+      }
     </script>
   </body>
 </html>

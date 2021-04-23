@@ -42,23 +42,44 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
+  display: flex;
+  flex-flow: column;
 }
-#textBox {
-  border-radius: 1rem;
-  padding: 1rem;
-  background: #e6e6e6;
+#chart {
+  height: 100%;
+  background: lavender;
+}
+#header, #chart, #footer {
+  opacity: 0;
+}
+#holder {
+  opacity: 1;
+  display: block;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  font-family: "ABCSans Black", "Arial Black", sans-serif;
+  color: #ccc;
+  font-size: 1.5rem;
+}
+#header {
+  margin-bottom: .75rem;
+}
+#footer {
+  margin-top: .75rem;
+  color: #999;
+  font-size: .8rem;
+}
+#title p:first-child {
+  font-family: "ABCSans Black", "Arial Black", sans-serif;
+  font-size: 1.25rem;
 }
 h1, p {
   margin: 0;
 }
-h1 {
-  font-size: 1.5rem;
-  margin-bottom: .5rem;
-}
-@media only screen and (min-width: 500px) {
-
+@media only screen and (min-width: 639px) {
+  #container {
+    padding: 2rem;
+  }
 }
