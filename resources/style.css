@@ -37,19 +37,17 @@ body {
   margin: 0;
 }
 #container {
+  display: flex;
+  flex-flow: column;
+}
+#tempContainer {
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
-  flex-flow: column;
 }
-#chart {
-  height: 100%;
-  background: lavender;
-}
-#header, #chart, #footer {
+#header, #chart, #footer, #descriptor {
   opacity: 0;
 }
 #holder {
@@ -65,9 +63,18 @@ body {
 }
 #header {
   margin-bottom: .75rem;
+  display: flex;
+  justify-content: space-between;
+}
+#nagivation {
+  display: flex;
+  background: pink;
+}
+#navigation .icon {
+  height: 50px;
 }
 #footer {
-  margin-top: .75rem;
+  margin-top: 1rem;
   color: #999;
   font-size: .8rem;
 }
@@ -78,8 +85,93 @@ body {
 h1, p {
   margin: 0;
 }
-@media only screen and (min-width: 639px) {
-  #container {
-    padding: 2rem;
-  }
+#descriptor {
+  color: #333;
+  font-size: .8rem;
+  text-transform: uppercase;
+  margin-top: 2.25rem;
+  height: 20px;
+  text-align: center;
+  display: flex;
+  justify-content: flex-end;
+}
+#descriptor div {
+  background: #e6e6e6;
+  transform: rotateX(90deg);
+  line-height: 20px;
+  border: solid .5px #666;
+  border-radius: 1rem;
+}
+.candidateBar {
+  position: absolute;
+  display: flex;
+  font-size: .9rem;
+  color: white;
+  opacity: 0;
+  width: 100%;
+}
+.nameField {
+  text-align: right;
+}
+.exhausted .nameField {
+  margin-right: 2px;
+}
+.firstName {
+  font-family: "ABCSans Light", "Arial Narrow", sans-serif;
+  font-size: .8rem;
+}
+.partyField {
+  margin: 0 2px;
+  text-align: center;
+}
+.ptyblue .nameField, .ptyblue .partyField, .ptyblue .resultBar {
+  background: #1467cc;
+}
+.ptyred .nameField, .ptyred .partyField, .ptyred .resultBar {
+  background: #d61515;
+}
+.ptylightgreen .nameField, .ptylightgreen .partyField, .ptylightgreen .resultBar {
+  background: #79c400;
+}
+.ptybrown .nameField, .ptybrown .partyField, .ptybrown .resultBar {
+  background: #A67B54;
+}
+.exhausted .nameField, .exhausted .partyField, .exhausted .resultBar {
+  background: #666;
+}
+.exhausted .firstName {
+  font-family: "ABCSans Regular", "Arial", sans-serif;
+  font-size: .9rem;
+}
+.resultField {
+  background: #f2f2f2;
+  flex-grow: 1;
+  display: flex;
+}
+.resultBar {
+  height: 100%;
+  width: 0px;
+}
+.resultLabel {
+  font-family: "ABCSans Light", "Arial Narrow", sans-serif;
+  color: #666;
+  padding-left: 4px;
+  font-size: .75rem;
+  line-height: 25px;
+}
+#quotaLine {
+  position: absolute;
+  height: 0px;
+  opacity: 0;
+  border-left: dashed 1px #666;
+}
+#quotaLabel {
+  position: absolute;
+  opacity: 0;
+  color: #666;
+  font-size: .75rem;
+  text-align: center;
+}
+@media only screen and (max-width: 500px) {
+
 }

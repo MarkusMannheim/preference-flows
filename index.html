@@ -26,13 +26,19 @@
 
   <body>
     <!-- HTML skeleton -->
-    <div id="container">
+    <div id="tempContainer">
       <div id="holder">Preparing chart ...</div>
+    </div>
+    <div id="container">
       <div id="header">
         <div id="title"></div>
-        <div id="navigation"></div>
+        <div id="navigation">
+        </div>
       </div>
       <div id="chart"></div>
+      <div id="quotaLine"></div>
+      <div id="quotaLabel">quota<br><span></span></div>
+      <div id="descriptor"></div>
       <div id="footer"></div>
     </div>
 
@@ -49,10 +55,24 @@
       holder = d3.select("#holder");
       header = d3.select("#header");
       title = d3.select("#title");
-      navigation = d3.select("#navigation");
+      descriptor = d3.select("#descriptor");
       chart = d3.select("#chart");
+      quotaLine = d3.select("#quotaLine");
+      quotaLabel = d3.select("#quotaLabel");
       footer = d3.select("#footer")
         .html("Data: " + source + " Electoral Commission<span>. </span>Chart: Markus Mannheim");
+      loopTime = 750;
+      navigation = d3.select("#navigation");
+
+      // add icons to controls
+      controls = ["Previous", "Play", "Pause", "Next"];
+      controls.forEach(function(media) {
+        d3.svg("./resources/icon" + media + ".svg")
+          .then(function(svg) {
+            navigation.node()
+              .append(svg.documentElement);
+          });
+      });
 
       // fetch chart data
       d3.text("./data/" + polity + "/" + year + "/" + electorate + ".csv")
@@ -60,26 +80,181 @@
           // check and format data
           [chartData, quota] = dataFormat(data);
 
+          setUpChart();
+
+          // check screen dimensions
+          window.addEventListener("resize", resize);
+
           // fade in
-          d3.timeout(setUpChart, 500);
+          d3.timeout(initialChartLayout, 500);
         });
 
       function resize() {
-        let dimensions = document.getElementById("chart")
-          .getBoundingClientRect();
-        width = dimensions.width;
+        width = document.getElementById("chart").offsetWidth;
         mobile = width < 500;
+        largeScreen = width > 638;
+
+        // fill chart height
+        chartHeight = mobile ? candidates_no * 21 - 1 : candidates_no * 27 - 2;
+        chart.style("height", chartHeight + "px");
+
+        dimensions = document.getElementById("chart")
+          .getBoundingClientRect();
 
         // fix footer for mobile
         if (mobile) footer.select("span").html("<br>");
+
+        // find widest nameField; apply width to all fields
+        let nameFieldWidths = []
+        document.querySelectorAll(".nameField")
+          .forEach(function(nameField) {
+            nameFieldWidths.push(nameField.offsetWidth);
+          });
+        nameFields.style("width", d3.max(nameFieldWidths) + 6 + "px")
+          .style("padding-right", "6px");
+
+        // find widest partyField; apply width to all fields
+        let partyFieldWidths = []
+        document.querySelectorAll(".partyField")
+          .forEach(function(partyField) {
+            partyFieldWidths.push(partyField.offsetWidth);
+          });
+        partyFields.style("width", d3.max(partyFieldWidths) + "px")
+          .style("padding", "0 3px");
+
+        resultStart = document.querySelector(".resultField").offsetLeft;
+        resultWidth = document.querySelector(".resultField").offsetWidth;
+
+        // width of exhausted nameField
+        exhaustedBar.select(".nameField")
+        .style("width", resultStart - 8 + "px")
+        .style("padding-right", "6px");
+
+        // axis scales
+        x.range([0, resultWidth]);
+        y.range([dimensions.top, dimensions.top + chartHeight]);
+
+        // adjust bar heights
+        d3.selectAll(".candidateBar").style("height", y.bandwidth() + "px")
+          .style("line-height", y.bandwidth() + "px");
+
+        // position quota line and label
+        quotaLine.style("top", dimensions.top + "px")
+          .style("left", (resultStart + x(quota)) + "px");
+        quotaLabel.style("top", dimensions.bottom + "px")
+          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").offsetWidth / 2) + "px");
+      }
+
+      function setXDomain() {
+        x.domain([0, d3.max(candidateData.concat(exhaustedData), function(d) {
+          return d.Votes[stage];
+        }) * 1.2]);
+      }
+
+      function setYDomain() {
+        let electedCandidates = candidateData.slice(0, elected);
+        let liveCandidates = eliminated > 0 ?
+          candidateData.slice(elected, candidateData.length - eliminated) :
+          candidateData.slice(elected);
+        let eliminatedCandidates = eliminated > 0 ?
+          candidateData.slice(candidateData.length - eliminated) :
+          candidateData.slice(0, 0);
+        liveCandidates.sort(function(a, b) { return d3.descending(a.Votes[stage], b.Votes[stage]); }); // sort by first-preference votes
+
+        candidateData = electedCandidates.concat(liveCandidates).concat(eliminatedCandidates);
+
+        y.domain(candidateData.map(function(d) {
+          return d.LastName;
+        }).concat(["exhausted"]));
       }
 
       function setUpChart() {
-        // check screen dimensions
-        window.addEventListener("resize", resize);
+        // populate header
+        title.append("p")
+          .text(electorate);
+        title.append("p")
+          .text(year + " " + source + " election");
+
+        // add quota
+        quotaLabel.select("span")
+          .text(d3.format(",.0f")(quota));
+
+        // separate data sources
+        candidateData = chartData
+          .filter(function(d) { return d.Type == "Candidate"; })
+          .sort(function(a, b) { return d3.descending(a.Votes[0], b.Votes[0]); }); // sort by first-preference votes
+        exhaustedData = chartData.slice(-2)[0];
+        descriptionData = chartData.slice(-1)[0];
+
+        // chart variables
+        candidates_no = chartData.length - 1;
+        stage = 0;
+        elected = 0;
+        eliminated = 0;
+        x = d3.scaleLinear();
+        setXDomain();
+        y = d3.scaleBand()
+          .paddingOuter(0)
+          .paddingInner(.1);
+        setYDomain();
+
+        // plot chart bars
+        candidateBars = chart
+          .selectAll(".candidateBar")
+            .data(candidateData, function(d) { return d.LastName; })
+          .enter().append("div")
+            .each(function(d) {
+              // assign classes
+              this.classList.add("candidateBar");
+              this.classList.add(d.PartyColour);
+            });
+
+        nameFields = candidateBars
+          .append("div")
+            .classed("nameField", true)
+            .html(function(d) { return "<span class='firstName'>" + d.FirstName + " </span><span class='lastName'>" + d.LastName + "</span>"; });
+
+        partyFields = candidateBars
+          .append("div")
+            .classed("partyField", true)
+            .text(function(d) { return d.PartyCode; });
+
+        resultFields = candidateBars
+          .append("div")
+            .classed("resultField", true);
+
+        resultBars = resultFields
+          .append("div")
+            .classed("resultBar", true);
+        resultLabels = resultFields
+          .append("div")
+            .classed("resultLabel", true)
+            .text("0");
+
+        // exhausted Votes
+        exhaustedBar = chart
+          .append("div")
+            .datum(exhaustedData)
+            .classed("candidateBar", true)
+            .classed("exhausted", true);
+        exhaustedBar.append("div")
+          .classed("nameField", true)
+          .html("<span class='lastName'>exhausted</span><span class='firstName'> votes</span>");
+        exhaustedBar.append("div")
+          .classed("resultField", true)
+          .append("div")
+            .classed("resultBar", true);
+        exhaustedBar.select(".resultField")
+          .append("div")
+            .classed("resultLabel", true)
+            .text("0");
+      }
+
+      function initialChartLayout() {
+        resize();
 
         // fade all over elements in
-        d3.selectAll("#header, #chart, #footer")
+        d3.selectAll("#header, #chart, #footer, #descriptor")
           .transition()
             .delay(500)
             .duration(500)
@@ -91,17 +266,60 @@
           .style("opacity", 0)
           .remove();
 
-        // populate header
-        title.append("p")
-          .text(electorate);
-        title.append("p")
-          .text(year + " " + source + " election");
+        // fade in candidate bars
+        d3.selectAll(".candidateBar")
+          .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
+          .transition()
+          .delay(function(d, i) { return i * 1000 / candidates_no; })
+          .duration(1)
+          .style("opacity", 1);
 
-        // chart variables
-        candidates_no = chartData.length - 1;
-        stage = 0;
+        // drop in quota line
+        quotaLine.transition()
+          .delay(500)
+          .duration(1000)
+          .style("opacity", 1)
+          .style("height", dimensions.height + "px");
 
-        resize();
+        // fade in quota label
+        quotaLabel.transition()
+          .delay(500)
+          .duration(1000)
+          .style("opacity", 1);
+
+        // plot initial results
+        d3.selectAll(".resultBar").transition()
+          .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
+          .duration(500)
+          .style("width", function(d) { return x(d.Votes[0]) + "px"; });
+        d3.selectAll(".resultLabel").transition()
+          .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
+          .duration(500)
+          .textTween(function(d) {
+            let i = d3.interpolate(0, d.Votes[0]);
+            return function(t) {
+              return d3.format(",.0f")(i(t));
+            };
+          });
+
+        // add first descriptor box;
+        d3.timeout(addDescription, 1500);
+      }
+
+      function addDescription() {
+        descriptor.select("div")
+          .transition()
+            .style("transform", "rotateX(-90deg)")
+            .on("end", enterDescription());
+        function enterDescription() {
+          descriptor.select("div")
+            .remove();
+          descriptor.append("div")
+          .text(descriptionData.Votes[stage])
+          .style("width", resultWidth + "px")
+          .transition()
+          .style("transform", "rotateX(0deg)");
+        }
       }
 
       function dataFormat(fileText) {
@@ -129,11 +347,19 @@
         fileLines.slice(5).forEach(function(line) {
           line = line.split(",");
           let row = {
-            Votes: []
+            Votes: [],
+            status: null
           };
           for (i = 0; i < line.length; i++) {
             if (i < 5) {
-              row[columns[i]] = line[i];
+              if (i == 1) {
+                // split name
+                let nameString = line[1].split(" ");
+                row["FirstName"] = nameString.splice(0, 1)[0];
+                row["LastName"] = nameString.join(" ");
+              } else {
+                row[columns[i]] = line[i];
+              }
             } else {
               if (line[0] == "Description") {
                 // comments don't need conversion
@@ -158,6 +384,72 @@
           }
         }
         return array;
+      }
+
+      function transitionResults() {
+        // adjust scales
+        setXDomain();
+        setYDomain();
+
+        // reorder candidates bars
+        d3.selectAll(".candidateBar")
+          .transition()
+            .ease(d3.easeLinear)
+            .duration(loopTime)
+            .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; });
+
+        // shift quota line and label
+        quotaLine.transition()
+          .ease(d3.easeLinear)
+          .duration(loopTime)
+          .style("left", (resultStart + x(quota)) + "px");
+        quotaLabel.transition()
+          .ease(d3.easeLinear)
+          .duration(loopTime)
+          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").offsetWidth / 2) + "px");
+
+        // change result bars
+        d3.selectAll(".resultBar").transition()
+          .ease(d3.easeLinear)
+          .duration(loopTime)
+          .style("width", function(d) { return x(d.Votes[stage]) + "px"; });
+        d3.selectAll(".resultLabel").transition()
+          .ease(d3.easeLinear)
+          .duration(loopTime)
+          .textTween(function(d) {
+            let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[stage]);
+            return function(t) {
+              return d3.format(",.0f")(i(t));
+            };
+          });
+
+        // shift descriptor box;
+        addDescription();
+
+        // analyse outcomes
+        analyseOutcomes();
+      }
+
+      function analyseOutcomes() {
+        // check whether candidate is elected or eliminated
+        candidateData.slice(elected, candidateData.length - eliminated) // ignore already elected or eliminated
+          .forEach(function(d) {
+
+            // is candidate newly elected?
+            if (d.Votes[stage] >= quota) {
+              elected = elected + 1;
+              d.status = "elected";
+
+            // is candidated newly eliminated?
+          } else if (d.Votes[stage] < 1) {
+            eliminated = eliminated + 1;
+            d.status = "eliminated";
+            candidateBars.filter(function(e) { return e.LastName == d.LastName })
+              .transition()
+                .duration(loopTime)
+                .style("opacity", .5);
+          }
+        });
       }
     </script>
   </body>
