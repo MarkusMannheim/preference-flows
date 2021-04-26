@@ -46,6 +46,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
+  pointer-events: none;
 }
 #header, #chart, #footer, #descriptor {
   opacity: 0;
@@ -68,10 +69,17 @@ body {
 }
 #nagivation {
   display: flex;
-  background: pink;
+  justify-content: flex-end;
 }
-#navigation .icon {
-  height: 50px;
+.icon {
+  fill: #999;
+}
+.icon.limit {
+  fill: #ccc;
+  pointer-events: none;
+}
+.icon.off {
+  display: none;
 }
 #footer {
   margin-top: 1rem;
@@ -86,7 +94,7 @@ h1, p {
   margin: 0;
 }
 #descriptor {
-  color: #333;
+  color: white;
   font-size: .8rem;
   text-transform: uppercase;
   margin-top: 2.25rem;
@@ -96,11 +104,10 @@ h1, p {
   justify-content: flex-end;
 }
 #descriptor div {
-  background: #e6e6e6;
+  background: #666;
   transform: rotateX(90deg);
   line-height: 20px;
-  border: solid .5px #666;
-  border-radius: 1rem;
+  border-radius: 10px;
 }
 .candidateBar {
   position: absolute;
@@ -154,24 +161,55 @@ h1, p {
 }
 .resultLabel {
   font-family: "ABCSans Light", "Arial Narrow", sans-serif;
-  color: #666;
+  color: #333;
   padding-left: 4px;
   font-size: .75rem;
   line-height: 25px;
+  opacity: 0;
 }
 #quotaLine {
   position: absolute;
   height: 0px;
   opacity: 0;
-  border-left: dashed 1px #666;
+  border-left: dashed 1px #999;
 }
 #quotaLabel {
   position: absolute;
   opacity: 0;
-  color: #666;
+  color: #999;
   font-size: .75rem;
   text-align: center;
 }
 @media only screen and (max-width: 500px) {
-
+  #holder {
+    font-size: 1.25rem;
+  }
+  #header {
+    margin-bottom: .5rem;
+  }
+  #footer {
+    margin-top: .75rem;
+    font-size: .75rem;
+  }
+  #title p:first-child {
+    font-size: 1.1rem;
+  }
+  #descriptor {
+    font-size: .75rem;
+    height: 18px;
+  }
+  #descriptor div {
+    line-height: 18px;
+  }
+  .candidateBar {
+    font-size: .8rem;
+  }
+  .firstName {
+    display: none;
+  }
+  .resultLabel {
+    padding-left: 3px;
+    font-size: .7rem;
+    line-height: 20px;
+  }
 }

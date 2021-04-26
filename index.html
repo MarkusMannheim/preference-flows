@@ -32,8 +32,7 @@
     <div id="container">
       <div id="header">
         <div id="title"></div>
-        <div id="navigation">
-        </div>
+        <div id="navigation"></div>
       </div>
       <div id="chart"></div>
       <div id="quotaLine"></div>
@@ -51,6 +50,7 @@
       electorate = parameters.get("electorate");
 
       // elements & variables
+      tempContainer = d3.select("#tempContainer");
       container = d3.select("#container");
       holder = d3.select("#holder");
       header = d3.select("#header");
@@ -66,13 +66,30 @@
 
       // add icons to controls
       controls = ["Previous", "Play", "Pause", "Next"];
-      controls.forEach(function(media) {
-        d3.svg("./resources/icon" + media + ".svg")
+      for (i = 0; i < controls.length; i++) {
+        d3.svg("./resources/icon" + controls[i] + ".svg")
           .then(function(svg) {
+            let id = svg.documentElement.id.toLowerCase(0);
             navigation.node()
               .append(svg.documentElement);
+
+            // add click functions
+            navigation.select("#" + id)
+              .on("click", function() {
+                navButton(id);
+              });
+
+            // add initial class
+            if (id == "previous") {
+              navigation.select("#previous")
+                .classed("limit", true);
+            }
+            if (id == "pause") {
+              navigation.select("#pause")
+                .classed("off", true);
+            }
           });
-      });
+      }
 
       // fetch chart data
       d3.text("./data/" + polity + "/" + year + "/" + electorate + ".csv")
@@ -90,9 +107,13 @@
         });
 
       function resize() {
-        width = document.getElementById("chart").offsetWidth;
+        width = document.getElementById("chart").getBoundingClientRect().width;
         mobile = width < 500;
         largeScreen = width > 638;
+
+        // adjust icon heights
+        d3.selectAll(".icon")
+          .style("height", document.querySelector("#header").getBoundingClientRect().height + "px");
 
         // fill chart height
         chartHeight = mobile ? candidates_no * 21 - 1 : candidates_no * 27 - 2;
@@ -107,28 +128,41 @@
         // find widest nameField; apply width to all fields
         let nameFieldWidths = []
         document.querySelectorAll(".nameField")
-          .forEach(function(nameField) {
-            nameFieldWidths.push(nameField.offsetWidth);
+          .forEach(function(nameField, i) {
+            d3.select(nameField).style("padding-right", "0px")
+              .html(function(d) {
+                if (d.Type == "Exhausted") {
+                  return "";
+                } else {
+                  return "<span class='firstName'>" + d.FirstName + " </span><span class='lastName'>" + d.LastName + "</span>";
+                }
+              });
+            nameFieldWidths.push(nameField.getBoundingClientRect().width);
           });
         nameFields.style("width", d3.max(nameFieldWidths) + 6 + "px")
+          .style("max-width", d3.max(nameFieldWidths) + 6 + "px")
           .style("padding-right", "6px");
 
         // find widest partyField; apply width to all fields
         let partyFieldWidths = []
         document.querySelectorAll(".partyField")
           .forEach(function(partyField) {
-            partyFieldWidths.push(partyField.offsetWidth);
+            d3.select(partyField).style("paddng", "0")
+              .text(function(d) { return d.PartyCode; });
+            partyFieldWidths.push(partyField.getBoundingClientRect().width);
           });
         partyFields.style("width", d3.max(partyFieldWidths) + "px")
+          .style("max-width", d3.max(partyFieldWidths) + "px")
           .style("padding", "0 3px");
 
-        resultStart = document.querySelector(".resultField").offsetLeft;
-        resultWidth = document.querySelector(".resultField").offsetWidth;
+        resultStart = document.querySelector(".resultField").getBoundingClientRect().left;
+        resultWidth = document.querySelector(".resultField").getBoundingClientRect().width;
 
         // width of exhausted nameField
         exhaustedBar.select(".nameField")
-        .style("width", resultStart - 8 + "px")
-        .style("padding-right", "6px");
+          .html("<span class='lastName'>exhausted</span><span class='firstName'> votes</span>")
+          .style("width", resultStart - 8 + "px")
+          .style("padding-right", "6px");
 
         // axis scales
         x.range([0, resultWidth]);
@@ -142,7 +176,7 @@
         quotaLine.style("top", dimensions.top + "px")
           .style("left", (resultStart + x(quota)) + "px");
         quotaLabel.style("top", dimensions.bottom + "px")
-          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").offsetWidth / 2) + "px");
+          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
       }
 
       function setXDomain() {
@@ -152,14 +186,18 @@
       }
 
       function setYDomain() {
-        let electedCandidates = candidateData.slice(0, elected);
-        let liveCandidates = eliminated > 0 ?
-          candidateData.slice(elected, candidateData.length - eliminated) :
-          candidateData.slice(elected);
-        let eliminatedCandidates = eliminated > 0 ?
-          candidateData.slice(candidateData.length - eliminated) :
-          candidateData.slice(0, 0);
-        liveCandidates.sort(function(a, b) { return d3.descending(a.Votes[stage], b.Votes[stage]); }); // sort by first-preference votes
+        let electedCandidates = candidateData.filter(function(d) {
+          return d.status == "elected";
+        });
+        let eliminatedCandidates = candidateData.filter(function(d) {
+          return d.status == "eliminated";
+        });
+        let liveCandidates = candidateData.filter(function(d) {
+          return d.status !== "eliminated" && d.status !== "elected";
+        });
+        liveCandidates.sort(function(a, b) {
+          return d3.descending(a.Votes[stage], b.Votes[stage]);
+        }); // sort by first-preference votes
 
         candidateData = electedCandidates.concat(liveCandidates).concat(eliminatedCandidates);
 
@@ -188,9 +226,13 @@
 
         // chart variables
         candidates_no = chartData.length - 1;
+        votes_no = d3.max(candidateData.map(function(d) { return d.Votes.length; }));
         stage = 0;
         elected = 0;
         eliminated = 0;
+        playing = false;
+        transitioning = false;
+        instruction= false;
         x = d3.scaleLinear();
         setXDomain();
         y = d3.scaleBand()
@@ -211,13 +253,11 @@
 
         nameFields = candidateBars
           .append("div")
-            .classed("nameField", true)
-            .html(function(d) { return "<span class='firstName'>" + d.FirstName + " </span><span class='lastName'>" + d.LastName + "</span>"; });
+            .classed("nameField", true);
 
         partyFields = candidateBars
           .append("div")
-            .classed("partyField", true)
-            .text(function(d) { return d.PartyCode; });
+            .classed("partyField", true);
 
         resultFields = candidateBars
           .append("div")
@@ -252,6 +292,7 @@
 
       function initialChartLayout() {
         resize();
+        transitioning = true;
 
         // fade all over elements in
         d3.selectAll("#header, #chart, #footer, #descriptor")
@@ -261,7 +302,7 @@
             .style("opacity", "1");
 
         // fade the holder out
-        holder.transition()
+        tempContainer.transition()
           .duration(500)
           .style("opacity", 0)
           .remove();
@@ -295,6 +336,10 @@
         d3.selectAll(".resultLabel").transition()
           .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
           .duration(500)
+          .style("opacity", function(d) {
+            return d.Votes[stage] < 1 ?
+              0 : 1;
+          })
           .textTween(function(d) {
             let i = d3.interpolate(0, d.Votes[0]);
             return function(t) {
@@ -302,8 +347,12 @@
             };
           });
 
-        // add first descriptor box;
+        // add first descriptor box and end transitioning;
         d3.timeout(addDescription, 1500);
+        d3.timeout(function() {
+          transitioning = false;
+          checkInstructions();
+        }, 2000);
       }
 
       function addDescription() {
@@ -315,10 +364,10 @@
           descriptor.select("div")
             .remove();
           descriptor.append("div")
-          .text(descriptionData.Votes[stage])
-          .style("width", resultWidth + "px")
-          .transition()
-          .style("transform", "rotateX(0deg)");
+            .text(descriptionData.Votes[stage].replace("surpuls", "surplus")) // correct typos!
+            .style("width", resultWidth + "px")
+            .transition()
+            .style("transform", "rotateX(0deg)");
         }
       }
 
@@ -387,6 +436,8 @@
       }
 
       function transitionResults() {
+        transitioning = true;
+
         // adjust scales
         setXDomain();
         setYDomain();
@@ -396,7 +447,10 @@
           .transition()
             .ease(d3.easeLinear)
             .duration(loopTime)
-            .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; });
+            .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
+            .style("opacity", function(d) {
+              return (d.Votes[stage] < 1 && d.Type !== "Exhausted") ? 0.5 : 1;
+            });
 
         // shift quota line and label
         quotaLine.transition()
@@ -406,7 +460,7 @@
         quotaLabel.transition()
           .ease(d3.easeLinear)
           .duration(loopTime)
-          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").offsetWidth / 2) + "px");
+          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
 
         // change result bars
         d3.selectAll(".resultBar").transition()
@@ -416,6 +470,10 @@
         d3.selectAll(".resultLabel").transition()
           .ease(d3.easeLinear)
           .duration(loopTime)
+          .style("opacity", function(d) {
+            return d.Votes[stage] < 1 ?
+              0 : 1;
+          })
           .textTween(function(d) {
             let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[stage]);
             return function(t) {
@@ -444,12 +502,154 @@
           } else if (d.Votes[stage] < 1) {
             eliminated = eliminated + 1;
             d.status = "eliminated";
-            candidateBars.filter(function(e) { return e.LastName == d.LastName })
-              .transition()
-                .duration(loopTime)
-                .style("opacity", .5);
           }
         });
+
+        // check navButton limits
+        if (stage == 0) {
+          navigation.select("#previous")
+            .classed("limit", true);
+        } else {
+          navigation.select("#previous")
+            .classed("limit", false);
+        }
+        if (stage == votes_no - 1) {
+          navigation.select("#next")
+            .classed("limit", true);
+        } else {
+          navigation.select("#next")
+            .classed("limit", false);
+        }
+
+        // if playing, keep going
+        d3.timeout(function() {
+          transitioning = false;
+          checkInstructions();
+        }, loopTime);
+      }
+
+      function navButton(id) {
+        instruction = id;
+        if (!transitioning) checkInstructions();
+      }
+
+      function checkInstructions() {
+        // instructions for play
+        if (instruction == "play") {
+          playing = true;
+          d3.select("#play")
+            .classed("off", true);
+          d3.select("#pause")
+            .classed("off", false);
+          stage = stage + 1;
+          if (stage == votes_no) {
+            resetTransition();
+          } else {
+            transitionResults();
+          }
+
+        } else {
+          playing = false;
+          d3.select("#play")
+            .classed("off", false);
+          d3.select("#pause")
+            .classed("off", true);
+        }
+
+        // instructions for pause
+        if (instruction == "pause") {
+          instruction = false;
+        }
+
+        // instructions for previous
+        if (instruction == "previous") {
+          instruction = false;
+          stage = stage - 1;
+          candidateBars.each(function(d) {
+            if (stage == 0) {
+              d.status = null;
+            } else {
+              d.status = d.Votes[stage - 1] >= quota ?
+                "elected" : d.Votes[stage - 1] < 1 ?
+                "eliminated" : null;
+            }
+          });
+          elected = candidateBars
+            .filter(function(d) {
+              return d.status == "elected";
+            }).length;
+          eliminated = candidateBars
+            .filter(function(d) {
+              return d.status == "eliminated";
+            }).length;
+          transitionResults();
+        }
+
+        // instructions for next
+        if (instruction == "next") {
+          instruction = false;
+          stage = stage + 1;
+          transitionResults();
+        }
+      }
+
+      function resetTransition() {
+        d3.timeout(function() {
+          if (instruction = "play") {
+            stage = 0;
+            elected = 0;
+            eliminated = 0;
+            candidateData.forEach(function(d) {
+              d.status = null;
+            });
+            transitioning = true;
+            navigation.select("#previous")
+              .classed("limit", true);
+            navigation.select("#next")
+              .classed("limit", false);
+
+            // adjust scales
+            setXDomain();
+            setYDomain();
+
+            // reorder candidates bars
+            d3.selectAll(".candidateBar")
+              .transition()
+                .duration(loopTime * 2)
+                .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
+                .style("opacity", 1);
+
+            // shift quota line and label
+            quotaLine.transition()
+              .duration(loopTime * 2)
+              .style("left", (resultStart + x(quota)) + "px");
+            quotaLabel.transition()
+              .duration(loopTime * 2)
+              .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
+
+            // change result bars
+            d3.selectAll(".resultBar").transition()
+              .duration(loopTime * 2)
+              .style("width", function(d) { return x(d.Votes[0]) + "px"; });
+            d3.selectAll(".resultLabel").transition()
+              .duration(loopTime * 2)
+              .style("opacity", function(d) {
+                return d.Votes[stage] < 1 ?
+                  0 : 1;
+              })
+              .textTween(function(d) {
+                let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[0]);
+                return function(t) {
+                  return d3.format(",.0f")(i(t));
+                };
+              });
+
+            // shift descriptor box;
+            addDescription();
+
+            d3.timeout(checkInstructions, loopTime * 4);
+          }
+        }, loopTime * 2);
       }
     </script>
   </body>
