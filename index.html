@@ -87,7 +87,7 @@
       }
 
       // fetch chart data
-      d3.text("./data/" + polity + "/" + year + "/" + electorate.slice(0, 1) + electorate.slice(1) + year + "_GraphData.csv")
+      d3.text("./data/" + polity + "/" + year + "/" + electorate.slice(0, 1).toUpperCase() + electorate.slice(1) + year + "_GraphData.csv")
         .then(function(data) {
           // check and format data
           [chartData, quota] = dataFormat(data);
