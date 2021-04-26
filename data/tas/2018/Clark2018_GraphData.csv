@@ -5,7 +5,7 @@ Link,https://www.abc.net.au/news/elections/tas/2021/guide/fran,,,,,,,,,,,,,,,,,,
 Type,Name,PartyName,PartyCode,PartyColour,Votes,,,,,,,,,,,,,,,,,
 Candidate,Alan Barnett,T4T,T4T,ptyblack,347,349,,,,,,,,,,,,,,,,
 Candidate,Rob Newitt,T4T,T4T,ptyblack,362,364,590,594,,,,,,,,,,,,,,
-Candidate,Lorraine Bennett,SFF,SFF,ptyblack,1190,1197,1249,1255,1575,1586,1593,1617,1618,,,,,,,,,
+Candidate,Lorraine Bennett,SFF,SFF,ptybrown,1190,1197,1249,1255,1575,1586,1593,1617,1618,,,,,,,,,
 Candidate,Scott Bacon,Labor,ALP,ptyred,11798,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866
 Candidate,Tim Cox,Labor,ALP,ptyred,3860,4123,4128,4139,4171,4187,4201,4212,4212,4415,5004,5092,5175,5245,,,,
 Candidate,Ella Haddad,Labor,ALP,ptyred,5288,5448,5454,5463,5481,5501,5547,5559,5560,5699,6586,6726,6835,6909,9085,9286,9295,9715
@@ -16,10 +16,10 @@ Candidate,Helen Burnet,Greens,GRN,ptylightgreen,1532,1537,1543,1704,1724,1790,22
 Candidate,Mel Fitzpatrick,Greens,GRN,ptylightgreen,733,735,739,786,799,1116,,,,,,,,,,,,
 Candidate,Rose Kokkoris,Greens,GRN,ptylightgreen,603,604,604,724,735,,,,,,,,,,,,,
 Candidate,Cassy O'Connor,Greens,GRN,ptylightgreen,8095,8131,8135,8199,8216,8477,8969,8977,8977,9098,9238,11240,10866,10866,10866,10866,10866,10866
-Candidate,Elise Archer,Liberal,LIB,ptybrown,10627,10643,10647,10648,10677,10687,10693,11088,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866
-Candidate,Simon Behrakis,Liberal,LIB,ptybrown,2317,2320,2322,2324,2331,2340,2346,2628,2662,2861,2881,2901,2905,,,,,
-Candidate,Sue Hickey,Liberal,LIB,ptybrown,7142,7156,7165,7169,7197,7201,7209,7360,7500,7754,7814,7847,7855,9130,9332,13722,13722,10866
-Candidate,Kristy Johnson,Liberal,LIB,ptylightgreen,3234,3241,3245,3247,3267,3267,3274,3633,3671,3902,3935,3959,3962,5288,5426,77,0,0
-Candidate,Dean Young,Liberal,LIB,ptyblack,1260,1262,1265,1268,1280,1280,1281,0,0,0,0,0,0,0,0,0,0,0
+Candidate,Elise Archer,Liberal,LIB,ptyblue,10627,10643,10647,10648,10677,10687,10693,11088,10866,10866,10866,10866,10866,10866,10866,10866,10866,10866
+Candidate,Simon Behrakis,Liberal,LIB,ptyblue,2317,2320,2322,2324,2331,2340,2346,2628,2662,2861,2881,2901,2905,,,,,
+Candidate,Sue Hickey,Liberal,LIB,ptyblue,7142,7156,7165,7169,7197,7201,7209,7360,7500,7754,7814,7847,7855,9130,9332,13722,13722,10866
+Candidate,Kristy Johnson,Liberal,LIB,ptyblue,3234,3241,3245,3247,3267,3267,3274,3633,3671,3902,3935,3959,3962,5288,5426,77,0,0
+Candidate,Dean Young,Liberal,LIB,ptyblue,1260,1262,1265,1268,1280,1280,1281,0,0,0,0,0,0,0,0,0,0,0
 Exhausted,,,,,0,7,9,11,13,15,18,20,24,68,101,157,262,357,577,1050,1104,3028
-Description,,,,,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191,65191
+Description,,,,,First preferences,Bacon (ALP) surplus distributed,Barnett (T4T) excluded,Benham (GRN) excluded,Newitt (T4T) excluded,Kokkoris (GRN) excluded,Fitzpatrick (GRN) excluded,Young (LIB) excluded,O'Connor (GRN) surplus distributed,Bennett (SFF) excluded,Sherlock (ALP) excluded,Burnet (GRN) excluded,O'Connor (GRN) surplus distributed,Behrakis (LIB) excluded,Cox (ALP) excluded,Johnson (LIB) part excluded,Johnson (LIB) excluded,Hickey (LIB) surplus distributed

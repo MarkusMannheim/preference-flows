@@ -17,7 +17,7 @@ Candidate,Gerard Gaffney,Labor,ALP,ptyred,752,1255,1256,1262,1263,1265,1270,1279
 Candidate,Janet Lambert,Labor,ALP,ptyred,1783,2884,2889,2894,2896,2900,2908,2920,2937,2946,2971,3126,3143,3184,3724,3809,3901,5181,5217,5851,7065,7213,7234,7440,7621,7722
 Candidate,Rebecca White,Labor,ALP,ptyred,16338,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538,11538
 Candidate,Kylie Wright,Labor,ALP,ptyred,920,1381,1381,1388,1390,1394,1397,1404,1411,1413,1431,1553,1566,1594,,,,,,,,,,,,
-Candidate,Frsaser Brindley,Greens,GRN,ptylightgreen,1905,1985,1987,1998,1999,2208,2216,2435,2439,2446,2760,2775,2781,2795,2838,4338,4420,4498,4515,4864,,,,,,
+Candidate,Fraser Brindley,Greens,GRN,ptylightgreen,1905,1985,1987,1998,1999,2208,2216,2435,2439,2446,2760,2775,2781,2795,2838,4338,4420,4498,4515,4864,,,,,,
 Candidate,Helen Hutchinson,Greens,GRN,ptylightgreen,818,874,874,883,886,923,925,1119,1126,1132,1770,1781,1794,1814,1860,,,,,,,,,,,
 Candidate,Lucy Landon-Lane,Greens,GRN,ptylightgreen,832,875,878,888,896,937,942,1120,1124,1125,,,,,,,,,,,,,,,,
 Candidate,Glenn Millar,Greens,GRN,ptylightgreen,501,531,531,537,538,695,696,,,,,,,,,,,,,,,,,,,
@@ -30,4 +30,4 @@ Candidate,Wayne Turale,SFF,SFF,ptybrown,535,547,549,564,689,690,884,888,894,,,,,
 Candidate,Tennille Murtagh,Independent,IND,ptyblack,152,156,,,,,,,,,,,,,,,,,,,,,,,,
 Candidate,Kim Peart,Independent,IND,ptyblack,159,164,249,,,,,,,,,,,,,,,,,,,,,,,
 Exhausted,,,,,0,13,16,21,28,36,43,48,54,63,70,75,101,123,146,206,1434,1538,1674,2591,4496,4870,4907,5887,6714,7279
-Description,,,,,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69222,69122,69222
+Description,,,,,First preferences,White (ALP) surplus distributed,Murtagh (IND) excluded,Peart (IND) excluded,Di Falco (SFF) excluded,Whisson (GRN) excluded,Allen (SFF) excluded,Millar (GRN) excluded,Vervaart (JLN) excluded,Turale (SFF) excluded,Landon-Lane (GRN) excluded,Gaffney (ALP) excluded,Harvey (SFF) excluded,Reynold (JLN) excluded,Wright (ALP) excluded,Hutchinson (GRN) excluded,Broadby (SFF) excluded,Clark (ALP) excluded,Tucker (ALP) excluded,Kent (LIB) excluded,Brindley (GRN) excluded,Howlett (LIB) part excluded,Howlett (LIB) excluded,Barnett (LIB) surplus distributed,Shelton (LIB) surplus distributed,Hidding (LIB) surplus distributed

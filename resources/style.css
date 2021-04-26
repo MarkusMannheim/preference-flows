@@ -39,6 +39,7 @@ body {
 #container {
   display: flex;
   flex-flow: column;
+  max-width: 638px;
 }
 #tempContainer {
   position: fixed;
@@ -63,7 +64,7 @@ body {
   font-size: 1.5rem;
 }
 #header {
-  margin-bottom: .75rem;
+  margin-bottom: .5rem;
   display: flex;
   justify-content: space-between;
 }
@@ -82,23 +83,26 @@ body {
   display: none;
 }
 #footer {
-  margin-top: 1rem;
+  margin-top: .75rem;
   color: #999;
-  font-size: .8rem;
+  font-size: .75rem;
+}
+#title {
+  font-size: .95rem;
 }
 #title p:first-child {
   font-family: "ABCSans Black", "Arial Black", sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
 }
 h1, p {
   margin: 0;
 }
 #descriptor {
   color: white;
-  font-size: .8rem;
+  font-size: .75rem;
   text-transform: uppercase;
   margin-top: 2.25rem;
-  height: 20px;
+  height: 18px;
   text-align: center;
   display: flex;
   justify-content: flex-end;
@@ -106,16 +110,17 @@ h1, p {
 #descriptor div {
   background: #666;
   transform: rotateX(90deg);
-  line-height: 20px;
-  border-radius: 10px;
+  line-height: 18px;
+  border-radius: 9px;
 }
 .candidateBar {
   position: absolute;
   display: flex;
-  font-size: .9rem;
+  font-size: .85rem;
   color: white;
   opacity: 0;
   width: 100%;
+  max-width: 638px;
 }
 .nameField {
   text-align: right;
@@ -125,7 +130,7 @@ h1, p {
 }
 .firstName {
   font-family: "ABCSans Light", "Arial Narrow", sans-serif;
-  font-size: .8rem;
+  font-size: .75rem;
 }
 .partyField {
   margin: 0 2px;
@@ -134,21 +139,45 @@ h1, p {
 .ptyblue .nameField, .ptyblue .partyField, .ptyblue .resultBar {
   background: #1467cc;
 }
+.ptyblue .partyField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+}
 .ptyred .nameField, .ptyred .partyField, .ptyred .resultBar {
   background: #d61515;
+}
+.ptyred .partyField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
 }
 .ptylightgreen .nameField, .ptylightgreen .partyField, .ptylightgreen .resultBar {
   background: #79c400;
 }
+.ptylightgreen .partyField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+}
 .ptybrown .nameField, .ptybrown .partyField, .ptybrown .resultBar {
   background: #A67B54;
+}
+.ptybrown .partyField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+}
+.ptyblack .nameField, .ptyblack .partyField, .ptyblack .resultBar {
+  background: #999;
+}
+.ptyblack .partyField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+}
+.ptygold .nameField, .ptygold .partyField, .ptygold .resultBar {
+  background: #ff7f00;
+}
+.ptygold .partyField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
 }
 .exhausted .nameField, .exhausted .partyField, .exhausted .resultBar {
   background: #666;
 }
 .exhausted .firstName {
   font-family: "ABCSans Regular", "Arial", sans-serif;
-  font-size: .9rem;
+  font-size: .85rem;
 }
 .resultField {
   background: #f2f2f2;
@@ -164,7 +193,7 @@ h1, p {
   color: #333;
   padding-left: 4px;
   font-size: .75rem;
-  line-height: 25px;
+  line-height: 20px;
   opacity: 0;
 }
 #quotaLine {
@@ -182,27 +211,30 @@ h1, p {
 }
 @media only screen and (max-width: 500px) {
   #holder {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
   #header {
-    margin-bottom: .5rem;
+    margin-bottom: .25rem;
   }
   #footer {
-    margin-top: .75rem;
+    margin-top: .5rem;
     font-size: .75rem;
   }
+  #title {
+    font-size: .9rem;
+  }
   #title p:first-child {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
   #descriptor {
     font-size: .75rem;
-    height: 18px;
+    height: 16px;
   }
   #descriptor div {
-    line-height: 18px;
+    line-height: 16px;
   }
   .candidateBar {
-    font-size: .8rem;
+    font-size: .75rem;
   }
   .firstName {
     display: none;
@@ -210,15 +242,9 @@ h1, p {
   .resultLabel {
     padding-left: 3px;
     font-size: .7rem;
-    line-height: 20px;
+    line-height: 18px;
   }
-}
-@media only screen and (min-width: 639px) {
-  #container {
-    width: 638px;
-    margin: 3rem;
-  }
-  .candidateBar {
-    max-width: 638px;
+  #quotaLabel {
+    font-size: .7rem;
   }
 }

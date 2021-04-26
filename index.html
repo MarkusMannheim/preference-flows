@@ -104,14 +104,13 @@
       function resize() {
         width = document.getElementById("chart").getBoundingClientRect().width;
         mobile = width < 500;
-        largeScreen = width > 638;
 
         // adjust icon heights
         d3.selectAll(".icon")
           .style("height", document.querySelector("#header").getBoundingClientRect().height + "px");
 
         // fill chart height
-        chartHeight = mobile ? candidates_no * 21 - 1 : candidates_no * 27 - 2;
+        chartHeight = mobile ? candidates_no * 19 - 1 : candidates_no * 22 - 2;
         chart.style("height", chartHeight + "px");
 
         dimensions = document.getElementById("chart")
@@ -306,9 +305,9 @@
         d3.selectAll(".candidateBar")
           .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
           .transition()
-          .delay(function(d, i) { return i * 1000 / candidates_no; })
-          .duration(1)
-          .style("opacity", 1);
+            .delay(function(d, i) { return i * 1000 / candidates_no; })
+            .duration(1)
+            .style("opacity", 1);
 
         // drop in quota line
         quotaLine.transition()
