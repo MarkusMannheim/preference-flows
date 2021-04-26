@@ -213,3 +213,12 @@ h1, p {
     line-height: 20px;
   }
 }
+@media only screen and (min-width: 639px) {
+  #container {
+    width: 638px;
+    margin: 3rem;
+  }
+  .candidateBar {
+    max-width: 638px;
+  }
+}
