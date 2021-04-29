@@ -39,7 +39,7 @@ body {
 #container {
   display: flex;
   flex-flow: column;
-  max-width: 638px;
+  max-width: 832px;
 }
 #tempContainer {
   position: fixed;
@@ -73,7 +73,7 @@ body {
   justify-content: flex-end;
 }
 .icon {
-  fill: #999;
+  fill: #666;
 }
 .icon.limit {
   fill: #ccc;
@@ -81,6 +81,9 @@ body {
 }
 .icon.off {
   display: none;
+}
+.icon:hover {
+  fill: #FFB300;
 }
 #footer {
   margin-top: .75rem;
@@ -108,7 +111,7 @@ h1, p {
   justify-content: flex-end;
 }
 #descriptor div {
-  background: #666;
+  background: #333;
   transform: rotateX(90deg);
   line-height: 18px;
   border-radius: 9px;
@@ -120,10 +123,11 @@ h1, p {
   color: white;
   opacity: 0;
   width: 100%;
-  max-width: 638px;
+  max-width: 832px;
 }
 .nameField {
   text-align: right;
+  text-shadow: 1px 1px 2px #333;
 }
 .exhausted .nameField {
   margin-right: 2px;
@@ -135,45 +139,46 @@ h1, p {
 .partyField {
   margin: 0 2px;
   text-align: center;
+  text-shadow: 1px 1px 2px #333;
 }
 .ptyblue .nameField, .ptyblue .partyField, .ptyblue .resultBar {
   background: #1467cc;
 }
-.ptyblue .partyField {
-  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+.ptyblue .nameField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .2));
 }
 .ptyred .nameField, .ptyred .partyField, .ptyred .resultBar {
   background: #d61515;
 }
-.ptyred .partyField {
-  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+.ptyred .nameField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .2));
 }
 .ptylightgreen .nameField, .ptylightgreen .partyField, .ptylightgreen .resultBar {
   background: #79c400;
 }
-.ptylightgreen .partyField {
-  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+.ptylightgreen .nameField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .2));
 }
 .ptybrown .nameField, .ptybrown .partyField, .ptybrown .resultBar {
   background: #A67B54;
 }
-.ptybrown .partyField {
-  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+.ptybrown .nameField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .2));
 }
 .ptyblack .nameField, .ptyblack .partyField, .ptyblack .resultBar {
-  background: #999;
+  background: #666;
 }
-.ptyblack .partyField {
-  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+.ptyblack .nameField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .2));
 }
 .ptygold .nameField, .ptygold .partyField, .ptygold .resultBar {
-  background: #ff7f00;
+  background: #ffc200;
 }
-.ptygold .partyField {
-  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .25));
+.ptygold .nameField {
+  background-image: linear-gradient(to right, rgba(51,51,51, 0), rgba(51,51,51, .2));
 }
 .exhausted .nameField, .exhausted .partyField, .exhausted .resultBar {
-  background: #666;
+  background: #333;
 }
 .exhausted .firstName {
   font-family: "ABCSans Regular", "Arial", sans-serif;
@@ -246,5 +251,8 @@ h1, p {
   }
   #quotaLabel {
     font-size: .7rem;
+  }
+  .icon:hover {
+   fill: #666;
   }
 }

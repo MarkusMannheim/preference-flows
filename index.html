@@ -59,7 +59,7 @@
       controls = ["Previous", "Play", "Pause", "Next"];
       addControl(0);
       function addControl(i) {
-        d3.svg("./resources/icon" + controls[i] + ".svg")
+        d3.svg("./resources/icon" + controls[i] + ".svg?v1")
           .then(function(svg) {
             let id = svg.documentElement.id;
             navigation.node()
