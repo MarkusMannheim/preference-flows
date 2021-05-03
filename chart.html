@@ -17,12 +17,12 @@
     <meta name="keywords" content="abc, election, voting, preference, distribution, flow, votes">
     <meta name="author" content="Markus Mannheim">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="./resources/abcLogo64.png" rel="icon">
+    <link href="./media/abcLogo64.png" rel="icon">
 
     <!-- scripts & styles -->
     <script src="./resources/d3.v6.min.js"></script>
-    <script src="./resources/functions.css"></script>
-    <link href="./resources/style.css" rel="stylesheet">
+    <script src="./resources/functions.js"></script>
+    <link href="./resources/chartStyle.css" rel="stylesheet">
   </head>
 
   <body>
@@ -30,24 +30,23 @@
 
     <!-- temporary splash -->
     <div id="tempContainer">
-      <div id="holder">Preparing chart ...</div>
+      <div id="holder">Preparing data for chart ...</div>
     </div>
 
     <!-- chart structure -->
-    <div id="container">
+    <div id="container" class="off">
       <div id="header">
         <div id="title"></div>
         <div id="navigation"></div>
         <div id="descriptor"></div>
       </div>
 
-      <!-- svg elements -->
-      <svg id="chart">
-        <g id="quotaGroup">
-          <line id="quotaLine"></line>
-          <text id="quotaLabel"></text>
-          <text id="quotaValue"></text>
-        </g>
+      <!-- graphic canvas -->
+      <div id="chart"></div>
+      <div id="quotaGroup">
+        <div id="quotaLine"></div>
+        <div id="quotaLabel"></div>
+      </div>
 
       <div id="footer"></div>
     </div>
@@ -56,612 +55,633 @@
 
       // fetch page parameters
       var parameters = getParameters();
+      var polity = parameters[0];
+      var polityString = parameters[1];
+      var year = parameters[2];
+      var electorate = parameters[3];
+      var electorateString = parameters[4];
 
-      // elements & variables
+      // define page elements
       tempContainer = d3.select("#tempContainer");
       container = d3.select("#container");
-      holder = d3.select("#holder");
       header = d3.select("#header");
       title = d3.select("#title");
+      nagivation = d3.select("#nagivation");
       descriptor = d3.select("#descriptor");
       chart = d3.select("#chart");
+      quotaGroup = d3.select("#quotaGroup");
       quotaLine = d3.select("#quotaLine");
       quotaLabel = d3.select("#quotaLabel");
-      footer = d3.select("#footer")
-        .html("Data: " + source + " Electoral Commission<span>. </span>Chart: Markus Mannheim");
-      loopTime = 750;
-      navigation = d3.select("#navigation");
+      footer = d3.select("#footer");
+
+      // load chart and icon data
+      Promise.all([
+        d3.svg("./media/icon-previous.svg"), // data 0
+        d3.svg("./media/icon-play.svg"), // data 1
+        d3.svg("./media/icon-pause.svg"), // data 2
+        d3.svg("./media/icon-next.svg"), // data 3
+        d3.svg("./data/" + polity + "/" + year + "/" + electorate.slice(0, 1).toUpperCase() + electorate.slice(1) + year + "_GraphData.csv") // data 4
+      ]).then(function(data) {
+
+        // complete header, footer and navigation
+        setUpChart();
+
+      });
+
+
+
+
 
       // add icons to controls
-      controls = ["Previous", "Play", "Pause", "Next"];
-      addControl(0);
-      function addControl(i) {
-        d3.svg("./resources/icon" + controls[i] + ".svg?v1")
-          .then(function(svg) {
-            let id = svg.documentElement.id;
-            navigation.node()
-              .appendChild(svg.documentElement);
-
-            // add click functions
-            navigation.select("#" + id)
-              .style("height", "0px")
-              .on("click", function() {
-                navButton(id);
-              });
-
-            // add initial class
-            if (id == "previous") {
-              navigation.select("#previous")
-                .classed("limit", true);
-            }
-            if (id == "pause") {
-              navigation.select("#pause")
-                .classed("off", true);
-            }
-            let j = i + 1;
-            if (j < controls.length) addControl(j);
-          });
-      }
-
-      // fetch chart data
-      d3.text("./data/" + polity + "/" + year + "/" + electorate.slice(0, 1).toUpperCase() + electorate.slice(1) + year + "_GraphData.csv")
-        .then(function(data) {
-          // check and format data
-          [chartData, quota] = dataFormat(data);
-
-          setUpChart();
-
-          // check screen dimensions
-          window.addEventListener("resize", resize);
-
-          // fade in
-          d3.timeout(initialChartLayout, 500);
-        });
-
-      function resize() {
-        width = document.getElementById("chart").getBoundingClientRect().width;
-        mobile = width < 500;
-
-        // adjust icon heights
-        d3.selectAll(".icon")
-          .style("height", document.querySelector("#header").getBoundingClientRect().height + "px");
-
-        // fill chart height
-        chartHeight = mobile ? candidates_no * 19 - 1 : candidates_no * 22 - 2;
-        chart.style("height", chartHeight + "px");
-
-        dimensions = document.getElementById("chart")
-          .getBoundingClientRect();
-
-        // fix footer for mobile
-        if (mobile) footer.select("span").html("<br>");
-
-        // find widest nameField; apply width to all fields
-        let nameFieldWidths = []
-        document.querySelectorAll(".nameField")
-          .forEach(function(nameField, i) {
-            d3.select(nameField).style("padding-right", "0px")
-              .html(function(d) {
-                if (d.Type == "Exhausted") {
-                  return "";
-                } else {
-                  return "<span class='firstName'>" + d.FirstName + " </span><span class='lastName'>" + d.LastName + "</span>";
-                }
-              });
-            nameFieldWidths.push(nameField.getBoundingClientRect().width);
-          });
-        nameFields.style("width", d3.max(nameFieldWidths) + 6 + "px")
-          .style("max-width", d3.max(nameFieldWidths) + 6 + "px")
-          .style("padding-right", "6px");
-
-        // find widest partyField; apply width to all fields
-        let partyFieldWidths = []
-        document.querySelectorAll(".partyField")
-          .forEach(function(partyField) {
-            d3.select(partyField).style("paddng", "0")
-              .text(function(d) { return d.PartyCode; });
-            partyFieldWidths.push(partyField.getBoundingClientRect().width);
-          });
-        partyFields.style("width", d3.max(partyFieldWidths) + "px")
-          .style("max-width", d3.max(partyFieldWidths) + "px")
-          .style("padding", "0 3px");
-
-        resultStart = document.querySelector(".resultField").getBoundingClientRect().left;
-        resultWidth = document.querySelector(".resultField").getBoundingClientRect().width;
-
-        // width of exhausted nameField
-        exhaustedBar.select(".nameField")
-          .html("<span class='lastName'>exhausted</span><span class='firstName'> votes</span>")
-          .style("width", resultStart - 8 + "px")
-          .style("padding-right", "6px");
-
-        // axis scales
-        x.range([0, resultWidth]);
-        y.range([dimensions.top, dimensions.top + chartHeight]);
-
-        // adjust bar heights
-        d3.selectAll(".candidateBar").style("height", y.bandwidth() + "px")
-          .style("line-height", y.bandwidth() + "px");
-
-        // position quota line and label
-        quotaLine.style("top", dimensions.top + "px")
-          .style("left", (resultStart + x(quota)) + "px");
-        quotaLabel.style("top", dimensions.bottom + "px")
-          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
-      }
-
-      function setXDomain() {
-        x.domain([0, d3.max(candidateData.concat(exhaustedData), function(d) {
-          return d.Votes[stage];
-        }) * (document.querySelector("#container").getBoundingClientRect().width < 500 ? 1.3 : 1.2)]);
-      }
-
-      function setYDomain() {
-        let electedCandidates = candidateData.filter(function(d) {
-          return d.status == "elected";
-        });
-        let eliminatedCandidates = candidateData.filter(function(d) {
-          return d.status == "eliminated";
-        });
-        let liveCandidates = candidateData.filter(function(d) {
-          return d.status !== "eliminated" && d.status !== "elected";
-        });
-        liveCandidates.sort(function(a, b) {
-          return d3.descending(a.Votes[stage], b.Votes[stage]);
-        }); // sort by first-preference votes
-
-        candidateData = electedCandidates.concat(liveCandidates).concat(eliminatedCandidates);
-
-        y.domain(candidateData.map(function(d) {
-          return d.LastName;
-        }).concat(["exhausted"]));
-      }
-
-      function setUpChart() {
-        // populate header
-        title.append("p")
-          .text(electorate);
-        title.append("p")
-          .text(year + " " + source + " election");
-
-        // add quota
-        quotaLabel.select("span")
-          .text(d3.format(",.0f")(quota));
-
-        // separate data sources
-        candidateData = chartData
-          .filter(function(d) { return d.Type == "Candidate"; })
-          .sort(function(a, b) { return d3.descending(a.Votes[0], b.Votes[0]); }); // sort by first-preference votes
-        exhaustedData = chartData.slice(-2)[0];
-        descriptionData = chartData.slice(-1)[0];
-
-        // chart variables
-        candidates_no = chartData.length - 1;
-        votes_no = d3.max(candidateData.map(function(d) { return d.Votes.length; }));
-        stage = 0;
-        elected = 0;
-        eliminated = 0;
-        playing = false;
-        transitioning = false;
-        instruction= false;
-        x = d3.scaleLinear();
-        setXDomain();
-        y = d3.scaleBand()
-          .paddingOuter(0)
-          .paddingInner(.1);
-        setYDomain();
-
-        // plot chart bars
-        candidateBars = chart
-          .selectAll(".candidateBar")
-            .data(candidateData, function(d) { return d.LastName; })
-          .enter().append("div")
-            .each(function(d) {
-              // assign classes
-              this.classList.add("candidateBar");
-              this.classList.add(d.PartyColour);
-            });
-
-        nameFields = candidateBars
-          .append("div")
-            .classed("nameField", true);
-
-        partyFields = candidateBars
-          .append("div")
-            .classed("partyField", true);
-
-        resultFields = candidateBars
-          .append("div")
-            .classed("resultField", true);
-
-        resultBars = resultFields
-          .append("div")
-            .classed("resultBar", true);
-        resultLabels = resultFields
-          .append("div")
-            .classed("resultLabel", true)
-            .text("0");
-
-        // exhausted Votes
-        exhaustedBar = chart
-          .append("div")
-            .datum(exhaustedData)
-            .classed("candidateBar", true)
-            .classed("exhausted", true);
-        exhaustedBar.append("div")
-          .classed("nameField", true)
-          .html("<span class='lastName'>exhausted</span><span class='firstName'> votes</span>");
-        exhaustedBar.append("div")
-          .classed("resultField", true)
-          .append("div")
-            .classed("resultBar", true);
-        exhaustedBar.select(".resultField")
-          .append("div")
-            .classed("resultLabel", true)
-            .text("0");
-      }
-
-      function initialChartLayout() {
-        resize();
-        transitioning = true;
-
-        // fade all over elements in
-        d3.selectAll("#header, #chart, #footer, #descriptor")
-          .transition()
-            .delay(500)
-            .duration(500)
-            .style("opacity", "1");
-
-        // fade the holder out
-        tempContainer.transition()
-          .duration(500)
-          .style("opacity", 0)
-          .remove();
-
-        // fade in candidate bars
-        d3.selectAll(".candidateBar")
-          .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
-          .transition()
-            .delay(function(d, i) { return i * 1000 / candidates_no; })
-            .duration(1)
-            .style("opacity", 1);
-
-        // drop in quota line
-        quotaLine.transition()
-          .delay(500)
-          .duration(1000)
-          .style("opacity", 1)
-          .style("height", dimensions.height + "px");
-
-        // fade in quota label
-        quotaLabel.transition()
-          .delay(500)
-          .duration(1000)
-          .style("opacity", 1);
-
-        // plot initial results
-        d3.selectAll(".resultBar").transition()
-          .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
-          .duration(500)
-          .style("width", function(d) { return x(d.Votes[0]) + "px"; });
-        d3.selectAll(".resultLabel").transition()
-          .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
-          .duration(500)
-          .style("opacity", function(d) {
-            return d.Votes[stage] < 1 ?
-              0 : 1;
-          })
-          .textTween(function(d) {
-            let i = d3.interpolate(0, d.Votes[0]);
-            return function(t) {
-              return d3.format(",.0f")(i(t));
-            };
-          });
-
-        // add first descriptor box and end transitioning;
-        d3.timeout(addDescription, 1500);
-        d3.timeout(function() {
-          transitioning = false;
-          checkInstructions();
-        }, 2000);
-      }
-
-      function addDescription() {
-        descriptor.select("div")
-          .transition()
-            .style("transform", "rotateX(-90deg)")
-            .on("end", enterDescription());
-        function enterDescription() {
-          descriptor.select("div")
-            .remove();
-          descriptor.append("div")
-            .text(descriptionData.Votes[stage].replace("surpuls", "surplus")) // correct typos!
-            .style("width", resultWidth + "px")
-            .transition()
-            .style("transform", "rotateX(0deg)");
-        }
-      }
-
-      function dataFormat(fileText) {
-        // split text into lines
-        let fileLines = fileText.split("\n");
-
-        // remove empty lines
-        fileLines = removeEmptyValues(fileLines);
-
-        // validate data
-        if (electorate == fileLines[0].split(",")[1].toLowerCase()) {
-          electorate = electorate.slice(0, 1).toUpperCase() + electorate.slice(1);
-        } else {
-          console.log("failed electorate check");
-        }
-
-        // assign quota
-        let quota = +fileLines[1].split(",")[1];
-
-        // define columns
-        let columns = removeEmptyValues(fileLines[4].split(","));
-
-        // define chartData
-        chartData = [];
-        fileLines.slice(5).forEach(function(line) {
-          line = line.split(",");
-          let row = {
-            Votes: [],
-            status: null
-          };
-          for (i = 0; i < line.length; i++) {
-            if (i < 5) {
-              if (i == 1) {
-                // split name
-                let nameString = line[1].split(" ");
-                row["FirstName"] = nameString.splice(0, 1)[0];
-                row["LastName"] = nameString.join(" ");
-              } else {
-                row[columns[i]] = line[i];
-              }
-            } else {
-              if (line[0] == "Description") {
-                // comments don't need conversion
-                row["Votes"].push(line[i]);
-              } else {
-                // convert vote string to value
-                row["Votes"].push(+line[i]);
-              }
-            }
-          }
-          chartData.push(row);
-        });
-
-        return [chartData, quota];
-      }
-
-      function removeEmptyValues(array) {
-        for (i = 0; i < array.length; i++) {
-          if (array[i] == "") {
-            array = array.slice(0, i);
-            break;
-          }
-        }
-        return array;
-      }
-
-      function transitionResults() {
-        transitioning = true;
-
-        // adjust scales
-        setXDomain();
-        setYDomain();
-
-        // reorder candidates bars
-        d3.selectAll(".candidateBar")
-          .transition()
-            .ease(d3.easeLinear)
-            .duration(loopTime)
-            .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
-            .style("opacity", function(d) {
-              return (d.Votes[stage] < 1 && d.Type !== "Exhausted") ? 0.5 : 1;
-            });
-
-        // shift quota line and label
-        quotaLine.transition()
-          .ease(d3.easeLinear)
-          .duration(loopTime)
-          .style("left", (resultStart + x(quota)) + "px");
-        quotaLabel.transition()
-          .ease(d3.easeLinear)
-          .duration(loopTime)
-          .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
-
-        // change result bars
-        d3.selectAll(".resultBar").transition()
-          .ease(d3.easeLinear)
-          .duration(loopTime)
-          .style("width", function(d) { return x(d.Votes[stage]) + "px"; });
-        d3.selectAll(".resultLabel").transition()
-          .ease(d3.easeLinear)
-          .duration(loopTime)
-          .style("opacity", function(d) {
-            return d.Votes[stage] < 1 ?
-              0 : 1;
-          })
-          .textTween(function(d) {
-            let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[stage]);
-            return function(t) {
-              return d3.format(",.0f")(i(t));
-            };
-          });
-
-        // shift descriptor box;
-        addDescription();
-
-        // analyse outcomes
-        analyseOutcomes();
-      }
-
-      function analyseOutcomes() {
-        // check whether candidate is elected or eliminated
-        candidateData.slice(elected, candidateData.length - eliminated) // ignore already elected or eliminated
-          .forEach(function(d) {
-
-            // is candidate newly elected?
-            if (d.Votes[stage] >= quota) {
-              elected = elected + 1;
-              d.status = "elected";
-
-            // is candidated newly eliminated?
-          } else if (d.Votes[stage] < 1) {
-            eliminated = eliminated + 1;
-            d.status = "eliminated";
-          }
-        });
-
-        // check navButton limits
-        if (stage == 0) {
-          navigation.select("#previous")
-            .classed("limit", true);
-        } else {
-          navigation.select("#previous")
-            .classed("limit", false);
-        }
-        if (stage == votes_no - 1) {
-          navigation.select("#next")
-            .classed("limit", true);
-        } else {
-          navigation.select("#next")
-            .classed("limit", false);
-        }
-
-        // if playing, keep going
-        d3.timeout(function() {
-          transitioning = false;
-          checkInstructions();
-        }, loopTime);
-      }
-
-      function navButton(id) {
-        instruction = id;
-        if (!transitioning) checkInstructions();
-      }
-
-      function checkInstructions() {
-        // instructions for play
-        if (instruction == "play") {
-          playing = true;
-          d3.select("#play")
-            .classed("off", true);
-          d3.select("#pause")
-            .classed("off", false);
-          stage = stage + 1;
-          if (stage == votes_no) {
-            resetTransition();
-          } else {
-            transitionResults();
-          }
-
-        } else {
-          playing = false;
-          d3.select("#play")
-            .classed("off", false);
-          d3.select("#pause")
-            .classed("off", true);
-        }
-
-        // instructions for pause
-        if (instruction == "pause") {
-          instruction = false;
-        }
-
-        // instructions for previous
-        if (instruction == "previous") {
-          instruction = false;
-          stage = stage - 1;
-          candidateBars.each(function(d) {
-            if (stage == 0) {
-              d.status = null;
-            } else {
-              d.status = d.Votes[stage - 1] >= quota ?
-                "elected" : d.Votes[stage - 1] < 1 ?
-                "eliminated" : null;
-            }
-          });
-          elected = candidateBars
-            .filter(function(d) {
-              return d.status == "elected";
-            }).length;
-          eliminated = candidateBars
-            .filter(function(d) {
-              return d.status == "eliminated";
-            }).length;
-          transitionResults();
-        }
-
-        // instructions for next
-        if (instruction == "next") {
-          instruction = false;
-          stage = stage + 1;
-          transitionResults();
-        }
-      }
-
-      function resetTransition() {
-        d3.timeout(function() {
-          if (instruction = "play") {
-            stage = 0;
-            elected = 0;
-            eliminated = 0;
-            candidateData.forEach(function(d) {
-              d.status = null;
-            });
-            transitioning = true;
-            navigation.select("#previous")
-              .classed("limit", true);
-            navigation.select("#next")
-              .classed("limit", false);
-
-            // adjust scales
-            setXDomain();
-            setYDomain();
-
-            // reorder candidates bars
-            d3.selectAll(".candidateBar")
-              .transition()
-                .duration(loopTime * 2)
-                .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
-                .style("opacity", 1);
-
-            // shift quota line and label
-            quotaLine.transition()
-              .duration(loopTime * 2)
-              .style("left", (resultStart + x(quota)) + "px");
-            quotaLabel.transition()
-              .duration(loopTime * 2)
-              .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
-
-            // change result bars
-            d3.selectAll(".resultBar").transition()
-              .duration(loopTime * 2)
-              .style("width", function(d) { return x(d.Votes[0]) + "px"; });
-            d3.selectAll(".resultLabel").transition()
-              .duration(loopTime * 2)
-              .style("opacity", function(d) {
-                return d.Votes[stage] < 1 ?
-                  0 : 1;
-              })
-              .textTween(function(d) {
-                let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[0]);
-                return function(t) {
-                  return d3.format(",.0f")(i(t));
-                };
-              });
-
-            // shift descriptor box;
-            addDescription();
-
-            d3.timeout(checkInstructions, loopTime * 4);
-          }
-        }, loopTime * 2);
-      }
+      // controls = ["Previous", "Play", "Pause", "Next"];
+      // addControl(0);
+      // function addControl(i) {
+      //   d3.svg("./resources/icon" + controls[i] + ".svg?v1")
+      //     .then(function(svg) {
+      //       let id = svg.documentElement.id;
+      //       navigation.node()
+      //         .appendChild(svg.documentElement);
+      //
+      //       // add click functions
+      //       navigation.select("#" + id)
+      //         .style("height", "0px")
+      //         .on("click", function() {
+      //           navButton(id);
+      //         });
+      //
+      //       // add initial class
+      //       if (id == "previous") {
+      //         navigation.select("#previous")
+      //           .classed("limit", true);
+      //       }
+      //       if (id == "pause") {
+      //         navigation.select("#pause")
+      //           .classed("off", true);
+      //       }
+      //       let j = i + 1;
+      //       if (j < controls.length) addControl(j);
+      //     });
+      // }
+      //
+      // // fetch chart data
+      // d3.text("./data/" + polity + "/" + year + "/" + electorate.slice(0, 1).toUpperCase() + electorate.slice(1) + year + "_GraphData.csv")
+      //   .then(function(data) {
+      //     // check and format data
+      //     [chartData, quota] = dataFormat(data);
+      //
+      //     setUpChart();
+      //
+      //     // check screen dimensions
+      //     window.addEventListener("resize", resize);
+      //
+      //     // fade in
+      //     d3.timeout(initialChartLayout, 500);
+      //   });
+      //
+      // function resize() {
+      //   width = document.getElementById("chart").getBoundingClientRect().width;
+      //   mobile = width < 500;
+      //
+      //   // adjust icon heights
+      //   d3.selectAll(".icon")
+      //     .style("height", document.querySelector("#header").getBoundingClientRect().height + "px");
+      //
+      //   // fill chart height
+      //   chartHeight = mobile ? candidates_no * 19 - 1 : candidates_no * 22 - 2;
+      //   chart.style("height", chartHeight + "px");
+      //
+      //   dimensions = document.getElementById("chart")
+      //     .getBoundingClientRect();
+      //
+      //   // fix footer for mobile
+      //   if (mobile) footer.select("span").html("<br>");
+      //
+      //   // find widest nameField; apply width to all fields
+      //   let nameFieldWidths = []
+      //   document.querySelectorAll(".nameField")
+      //     .forEach(function(nameField, i) {
+      //       d3.select(nameField).style("padding-right", "0px")
+      //         .html(function(d) {
+      //           if (d.Type == "Exhausted") {
+      //             return "";
+      //           } else {
+      //             return "<span class='firstName'>" + d.FirstName + " </span><span class='lastName'>" + d.LastName + "</span>";
+      //           }
+      //         });
+      //       nameFieldWidths.push(nameField.getBoundingClientRect().width);
+      //     });
+      //   nameFields.style("width", d3.max(nameFieldWidths) + 6 + "px")
+      //     .style("max-width", d3.max(nameFieldWidths) + 6 + "px")
+      //     .style("padding-right", "6px");
+      //
+      //   // find widest partyField; apply width to all fields
+      //   let partyFieldWidths = []
+      //   document.querySelectorAll(".partyField")
+      //     .forEach(function(partyField) {
+      //       d3.select(partyField).style("paddng", "0")
+      //         .text(function(d) { return d.PartyCode; });
+      //       partyFieldWidths.push(partyField.getBoundingClientRect().width);
+      //     });
+      //   partyFields.style("width", d3.max(partyFieldWidths) + "px")
+      //     .style("max-width", d3.max(partyFieldWidths) + "px")
+      //     .style("padding", "0 3px");
+      //
+      //   resultStart = document.querySelector(".resultField").getBoundingClientRect().left;
+      //   resultWidth = document.querySelector(".resultField").getBoundingClientRect().width;
+      //
+      //   // width of exhausted nameField
+      //   exhaustedBar.select(".nameField")
+      //     .html("<span class='lastName'>exhausted</span><span class='firstName'> votes</span>")
+      //     .style("width", resultStart - 8 + "px")
+      //     .style("padding-right", "6px");
+      //
+      //   // axis scales
+      //   x.range([0, resultWidth]);
+      //   y.range([dimensions.top, dimensions.top + chartHeight]);
+      //
+      //   // adjust bar heights
+      //   d3.selectAll(".candidateBar").style("height", y.bandwidth() + "px")
+      //     .style("line-height", y.bandwidth() + "px");
+      //
+      //   // position quota line and label
+      //   quotaLine.style("top", dimensions.top + "px")
+      //     .style("left", (resultStart + x(quota)) + "px");
+      //   quotaLabel.style("top", dimensions.bottom + "px")
+      //     .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
+      // }
+      //
+      // function setXDomain() {
+      //   x.domain([0, d3.max(candidateData.concat(exhaustedData), function(d) {
+      //     return d.Votes[stage];
+      //   }) * (document.querySelector("#container").getBoundingClientRect().width < 500 ? 1.3 : 1.2)]);
+      // }
+      //
+      // function setYDomain() {
+      //   let electedCandidates = candidateData.filter(function(d) {
+      //     return d.status == "elected";
+      //   });
+      //   let eliminatedCandidates = candidateData.filter(function(d) {
+      //     return d.status == "eliminated";
+      //   });
+      //   let liveCandidates = candidateData.filter(function(d) {
+      //     return d.status !== "eliminated" && d.status !== "elected";
+      //   });
+      //   liveCandidates.sort(function(a, b) {
+      //     return d3.descending(a.Votes[stage], b.Votes[stage]);
+      //   }); // sort by first-preference votes
+      //
+      //   candidateData = electedCandidates.concat(liveCandidates).concat(eliminatedCandidates);
+      //
+      //   y.domain(candidateData.map(function(d) {
+      //     return d.LastName;
+      //   }).concat(["exhausted"]));
+      // }
+      //
+      // function setUpChart() {
+      //   // populate header
+      //   title.append("p")
+      //     .text(electorate);
+      //   title.append("p")
+      //     .text(year + " " + source + " election");
+      //
+      //   // add quota
+      //   quotaLabel.select("span")
+      //     .text(d3.format(",.0f")(quota));
+      //
+      //   // separate data sources
+      //   candidateData = chartData
+      //     .filter(function(d) { return d.Type == "Candidate"; })
+      //     .sort(function(a, b) { return d3.descending(a.Votes[0], b.Votes[0]); }); // sort by first-preference votes
+      //   exhaustedData = chartData.slice(-2)[0];
+      //   descriptionData = chartData.slice(-1)[0];
+      //
+      //   // chart variables
+      //   candidates_no = chartData.length - 1;
+      //   votes_no = d3.max(candidateData.map(function(d) { return d.Votes.length; }));
+      //   stage = 0;
+      //   elected = 0;
+      //   eliminated = 0;
+      //   playing = false;
+      //   transitioning = false;
+      //   instruction= false;
+      //   x = d3.scaleLinear();
+      //   setXDomain();
+      //   y = d3.scaleBand()
+      //     .paddingOuter(0)
+      //     .paddingInner(.1);
+      //   setYDomain();
+      //
+      //   // plot chart bars
+      //   candidateBars = chart
+      //     .selectAll(".candidateBar")
+      //       .data(candidateData, function(d) { return d.LastName; })
+      //     .enter().append("div")
+      //       .each(function(d) {
+      //         // assign classes
+      //         this.classList.add("candidateBar");
+      //         this.classList.add(d.PartyColour);
+      //       });
+      //
+      //   nameFields = candidateBars
+      //     .append("div")
+      //       .classed("nameField", true);
+      //
+      //   partyFields = candidateBars
+      //     .append("div")
+      //       .classed("partyField", true);
+      //
+      //   resultFields = candidateBars
+      //     .append("div")
+      //       .classed("resultField", true);
+      //
+      //   resultBars = resultFields
+      //     .append("div")
+      //       .classed("resultBar", true);
+      //   resultLabels = resultFields
+      //     .append("div")
+      //       .classed("resultLabel", true)
+      //       .text("0");
+      //
+      //   // exhausted Votes
+      //   exhaustedBar = chart
+      //     .append("div")
+      //       .datum(exhaustedData)
+      //       .classed("candidateBar", true)
+      //       .classed("exhausted", true);
+      //   exhaustedBar.append("div")
+      //     .classed("nameField", true)
+      //     .html("<span class='lastName'>exhausted</span><span class='firstName'> votes</span>");
+      //   exhaustedBar.append("div")
+      //     .classed("resultField", true)
+      //     .append("div")
+      //       .classed("resultBar", true);
+      //   exhaustedBar.select(".resultField")
+      //     .append("div")
+      //       .classed("resultLabel", true)
+      //       .text("0");
+      // }
+      //
+      // function initialChartLayout() {
+      //   resize();
+      //   transitioning = true;
+      //
+      //   // fade all over elements in
+      //   d3.selectAll("#header, #chart, #footer, #descriptor")
+      //     .transition()
+      //       .delay(500)
+      //       .duration(500)
+      //       .style("opacity", "1");
+      //
+      //   // fade the holder out
+      //   tempContainer.transition()
+      //     .duration(500)
+      //     .style("opacity", 0)
+      //     .remove();
+      //
+      //   // fade in candidate bars
+      //   d3.selectAll(".candidateBar")
+      //     .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
+      //     .transition()
+      //       .delay(function(d, i) { return i * 1000 / candidates_no; })
+      //       .duration(1)
+      //       .style("opacity", 1);
+      //
+      //   // drop in quota line
+      //   quotaLine.transition()
+      //     .delay(500)
+      //     .duration(1000)
+      //     .style("opacity", 1)
+      //     .style("height", dimensions.height + "px");
+      //
+      //   // fade in quota label
+      //   quotaLabel.transition()
+      //     .delay(500)
+      //     .duration(1000)
+      //     .style("opacity", 1);
+      //
+      //   // plot initial results
+      //   d3.selectAll(".resultBar").transition()
+      //     .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
+      //     .duration(500)
+      //     .style("width", function(d) { return x(d.Votes[0]) + "px"; });
+      //   d3.selectAll(".resultLabel").transition()
+      //     .delay(function(d, i) { return 1500 + i * 500 / candidates_no; })
+      //     .duration(500)
+      //     .style("opacity", function(d) {
+      //       return d.Votes[stage] < 1 ?
+      //         0 : 1;
+      //     })
+      //     .textTween(function(d) {
+      //       let i = d3.interpolate(0, d.Votes[0]);
+      //       return function(t) {
+      //         return d3.format(",.0f")(i(t));
+      //       };
+      //     });
+      //
+      //   // add first descriptor box and end transitioning;
+      //   d3.timeout(addDescription, 1500);
+      //   d3.timeout(function() {
+      //     transitioning = false;
+      //     checkInstructions();
+      //   }, 2000);
+      // }
+      //
+      // function addDescription() {
+      //   descriptor.select("div")
+      //     .transition()
+      //       .style("transform", "rotateX(-90deg)")
+      //       .on("end", enterDescription());
+      //   function enterDescription() {
+      //     descriptor.select("div")
+      //       .remove();
+      //     descriptor.append("div")
+      //       .text(descriptionData.Votes[stage].replace("surpuls", "surplus")) // correct typos!
+      //       .style("width", resultWidth + "px")
+      //       .transition()
+      //       .style("transform", "rotateX(0deg)");
+      //   }
+      // }
+      //
+      // function dataFormat(fileText) {
+      //   // split text into lines
+      //   let fileLines = fileText.split("\n");
+      //
+      //   // remove empty lines
+      //   fileLines = removeEmptyValues(fileLines);
+      //
+      //   // validate data
+      //   if (electorate == fileLines[0].split(",")[1].toLowerCase()) {
+      //     electorate = electorate.slice(0, 1).toUpperCase() + electorate.slice(1);
+      //   } else {
+      //     console.log("failed electorate check");
+      //   }
+      //
+      //   // assign quota
+      //   let quota = +fileLines[1].split(",")[1];
+      //
+      //   // define columns
+      //   let columns = removeEmptyValues(fileLines[4].split(","));
+      //
+      //   // define chartData
+      //   chartData = [];
+      //   fileLines.slice(5).forEach(function(line) {
+      //     line = line.split(",");
+      //     let row = {
+      //       Votes: [],
+      //       status: null
+      //     };
+      //     for (i = 0; i < line.length; i++) {
+      //       if (i < 5) {
+      //         if (i == 1) {
+      //           // split name
+      //           let nameString = line[1].split(" ");
+      //           row["FirstName"] = nameString.splice(0, 1)[0];
+      //           row["LastName"] = nameString.join(" ");
+      //         } else {
+      //           row[columns[i]] = line[i];
+      //         }
+      //       } else {
+      //         if (line[0] == "Description") {
+      //           // comments don't need conversion
+      //           row["Votes"].push(line[i]);
+      //         } else {
+      //           // convert vote string to value
+      //           row["Votes"].push(+line[i]);
+      //         }
+      //       }
+      //     }
+      //     chartData.push(row);
+      //   });
+      //
+      //   return [chartData, quota];
+      // }
+      //
+      // function removeEmptyValues(array) {
+      //   for (i = 0; i < array.length; i++) {
+      //     if (array[i] == "") {
+      //       array = array.slice(0, i);
+      //       break;
+      //     }
+      //   }
+      //   return array;
+      // }
+      //
+      // function transitionResults() {
+      //   transitioning = true;
+      //
+      //   // adjust scales
+      //   setXDomain();
+      //   setYDomain();
+      //
+      //   // reorder candidates bars
+      //   d3.selectAll(".candidateBar")
+      //     .transition()
+      //       .ease(d3.easeLinear)
+      //       .duration(loopTime)
+      //       .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
+      //       .style("opacity", function(d) {
+      //         return (d.Votes[stage] < 1 && d.Type !== "Exhausted") ? 0.5 : 1;
+      //       });
+      //
+      //   // shift quota line and label
+      //   quotaLine.transition()
+      //     .ease(d3.easeLinear)
+      //     .duration(loopTime)
+      //     .style("left", (resultStart + x(quota)) + "px");
+      //   quotaLabel.transition()
+      //     .ease(d3.easeLinear)
+      //     .duration(loopTime)
+      //     .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
+      //
+      //   // change result bars
+      //   d3.selectAll(".resultBar").transition()
+      //     .ease(d3.easeLinear)
+      //     .duration(loopTime)
+      //     .style("width", function(d) { return x(d.Votes[stage]) + "px"; });
+      //   d3.selectAll(".resultLabel").transition()
+      //     .ease(d3.easeLinear)
+      //     .duration(loopTime)
+      //     .style("opacity", function(d) {
+      //       return d.Votes[stage] < 1 ?
+      //         0 : 1;
+      //     })
+      //     .textTween(function(d) {
+      //       let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[stage]);
+      //       return function(t) {
+      //         return d3.format(",.0f")(i(t));
+      //       };
+      //     });
+      //
+      //   // shift descriptor box;
+      //   addDescription();
+      //
+      //   // analyse outcomes
+      //   analyseOutcomes();
+      // }
+      //
+      // function analyseOutcomes() {
+      //   // check whether candidate is elected or eliminated
+      //   candidateData.slice(elected, candidateData.length - eliminated) // ignore already elected or eliminated
+      //     .forEach(function(d) {
+      //
+      //       // is candidate newly elected?
+      //       if (d.Votes[stage] >= quota) {
+      //         elected = elected + 1;
+      //         d.status = "elected";
+      //
+      //       // is candidated newly eliminated?
+      //     } else if (d.Votes[stage] < 1) {
+      //       eliminated = eliminated + 1;
+      //       d.status = "eliminated";
+      //     }
+      //   });
+      //
+      //   // check navButton limits
+      //   if (stage == 0) {
+      //     navigation.select("#previous")
+      //       .classed("limit", true);
+      //   } else {
+      //     navigation.select("#previous")
+      //       .classed("limit", false);
+      //   }
+      //   if (stage == votes_no - 1) {
+      //     navigation.select("#next")
+      //       .classed("limit", true);
+      //   } else {
+      //     navigation.select("#next")
+      //       .classed("limit", false);
+      //   }
+      //
+      //   // if playing, keep going
+      //   d3.timeout(function() {
+      //     transitioning = false;
+      //     checkInstructions();
+      //   }, loopTime);
+      // }
+      //
+      // function navButton(id) {
+      //   instruction = id;
+      //   if (!transitioning) checkInstructions();
+      // }
+      //
+      // function checkInstructions() {
+      //   // instructions for play
+      //   if (instruction == "play") {
+      //     playing = true;
+      //     d3.select("#play")
+      //       .classed("off", true);
+      //     d3.select("#pause")
+      //       .classed("off", false);
+      //     stage = stage + 1;
+      //     if (stage == votes_no) {
+      //       resetTransition();
+      //     } else {
+      //       transitionResults();
+      //     }
+      //
+      //   } else {
+      //     playing = false;
+      //     d3.select("#play")
+      //       .classed("off", false);
+      //     d3.select("#pause")
+      //       .classed("off", true);
+      //   }
+      //
+      //   // instructions for pause
+      //   if (instruction == "pause") {
+      //     instruction = false;
+      //   }
+      //
+      //   // instructions for previous
+      //   if (instruction == "previous") {
+      //     instruction = false;
+      //     stage = stage - 1;
+      //     candidateBars.each(function(d) {
+      //       if (stage == 0) {
+      //         d.status = null;
+      //       } else {
+      //         d.status = d.Votes[stage - 1] >= quota ?
+      //           "elected" : d.Votes[stage - 1] < 1 ?
+      //           "eliminated" : null;
+      //       }
+      //     });
+      //     elected = candidateBars
+      //       .filter(function(d) {
+      //         return d.status == "elected";
+      //       }).length;
+      //     eliminated = candidateBars
+      //       .filter(function(d) {
+      //         return d.status == "eliminated";
+      //       }).length;
+      //     transitionResults();
+      //   }
+      //
+      //   // instructions for next
+      //   if (instruction == "next") {
+      //     instruction = false;
+      //     stage = stage + 1;
+      //     transitionResults();
+      //   }
+      // }
+      //
+      // function resetTransition() {
+      //   d3.timeout(function() {
+      //     if (instruction = "play") {
+      //       stage = 0;
+      //       elected = 0;
+      //       eliminated = 0;
+      //       candidateData.forEach(function(d) {
+      //         d.status = null;
+      //       });
+      //       transitioning = true;
+      //       navigation.select("#previous")
+      //         .classed("limit", true);
+      //       navigation.select("#next")
+      //         .classed("limit", false);
+      //
+      //       // adjust scales
+      //       setXDomain();
+      //       setYDomain();
+      //
+      //       // reorder candidates bars
+      //       d3.selectAll(".candidateBar")
+      //         .transition()
+      //           .duration(loopTime * 2)
+      //           .style("top", function(d) { return d.Type == "Exhausted" ? y("exhausted") + "px" : y(d.LastName) + "px"; })
+      //           .style("opacity", 1);
+      //
+      //       // shift quota line and label
+      //       quotaLine.transition()
+      //         .duration(loopTime * 2)
+      //         .style("left", (resultStart + x(quota)) + "px");
+      //       quotaLabel.transition()
+      //         .duration(loopTime * 2)
+      //         .style("left", (resultStart + x(quota) - document.querySelector("#quotaLabel").getBoundingClientRect().width / 2) + "px");
+      //
+      //       // change result bars
+      //       d3.selectAll(".resultBar").transition()
+      //         .duration(loopTime * 2)
+      //         .style("width", function(d) { return x(d.Votes[0]) + "px"; });
+      //       d3.selectAll(".resultLabel").transition()
+      //         .duration(loopTime * 2)
+      //         .style("opacity", function(d) {
+      //           return d.Votes[stage] < 1 ?
+      //             0 : 1;
+      //         })
+      //         .textTween(function(d) {
+      //           let i = d3.interpolate(+this.innerText.replace(",",""), d.Votes[0]);
+      //           return function(t) {
+      //             return d3.format(",.0f")(i(t));
+      //           };
+      //         });
+      //
+      //       // shift descriptor box;
+      //       addDescription();
+      //
+      //       d3.timeout(checkInstructions, loopTime * 4);
+      //     }
+      //   }, loopTime * 2);
+      // }
     </script>
   </body>
 </html>
